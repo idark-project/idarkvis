@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: #000;
+}
+
+.tooltip {
+  position: absolute;
+  width: 200px;
+  height: 48px;
+  pointer-events: none;
+  background-color: #ffffff;
+}
+
+</style>
+
+<script src="../../js/d3.v3.min.js"></script>
+<script src="../../js/chroma.min.js"></script>
+<script src="scatterplot.js"></script>
+
+<body onload="start()">
+
+<div class="dropdown">
+	X:
+	<select id="xVar" onChange="drawPlot()">
+	</select>
+	
+	Y:
+	<select id="yVar" onChange="drawPlot()">
+	</select>
+	
+	C:
+	<select id="cVar" onChange="drawPlot()">
+	</select>
+	
+	R:
+	<select id="rVar" onChange="drawPlot()">
+	</select>
+	
+</div>
+
+<div class="plot"></div>
+
+</body>
