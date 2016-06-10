@@ -1,4 +1,4 @@
-var fileName = "../../data/data.csv";
+var fileName = "../data/data.csv";
 
 var data;
 
