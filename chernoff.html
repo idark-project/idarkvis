@@ -6,10 +6,10 @@
         <script type="text/javascript" src="http://www.larsko.org/v/d3.min.js"></script>
         <script type="text/javascript" src="/js/chernoff.js"></script>
         <style type="text/css">
-.chernoff > * {
-    fill: none;
-    stroke: #000;
-}
+        .chernoff > * {
+            fill: none;
+            stroke: #000;
+        }
         </style>
     </head>
 
@@ -32,7 +32,7 @@
                 {f: 0, m: -1, nw: 0.3, nh: 0.3, ew: 0.3, eh: 0.3, b: -1},
                 {f: 0.5, m: 0, nw: 0.3, nh: 1, ew: 1, eh: 0.3, b: 0},
                 {f: 1, m: 1, nw: 1, nh: 0.3, ew: 0.3, eh: 1, b: 1},
-				{f: 1, m: 1, nw: 1, nh: 0.3, ew: 0.3, eh: 1, b: 1}];
+                {f: 1, m: 1, nw: 1, nh: 0.3, ew: 0.3, eh: 1, b: 1}];
 
         svg.selectAll("g.chernoff").data(dat).enter()
             .append("svg:g")
