@@ -62,11 +62,13 @@ var y = d3.scale.linear()
 
 var xAxis = d3.svg.axis()
     .scale(x)
-    .orient("bottom");
+    .orient("bottom")
+    .tickFormat(d3.format("g"));
 
 var yAxis = d3.svg.axis()
     .scale(y)
-    .orient("left");
+    .orient("left")
+    .tickFormat(d3.format("g"));
 
 /*
     Every time this function gets called (at pageload and when selecting a new variable), a new plot gets generated.
