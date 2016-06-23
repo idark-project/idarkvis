@@ -25,11 +25,17 @@ body {
     background-color: #ffffff;
 }
 
+.chernoff > * {
+    fill: none;
+    stroke: #000;
+}
+
 </style>
 
 <script src="/js/d3-v3.5.17.min.js"></script>
 <script src="/js/chroma-v1.1.1.min.js"></script>
 <script src="/js/scatterplot.js"></script>
+<script src="/js/chernoff.js"></script>
 
 <body onload="start()">
 
@@ -52,7 +58,12 @@ body {
     
 </div>
 
-<div class="plot"></div>
+<table>
+    <tr>
+        <td><div class="plot"></div></td>
+        <td><div class="face"></div></td>
+    </tr>
+</table>
 
 <div class="tooltip" style="opacity: 0"></div>
 

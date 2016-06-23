@@ -105,9 +105,20 @@ function drawPlot() {
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     /*
-        Saves the tooltip div, because we'll need it later.
+        Saves the tooltip and chernoff div, because we'll need it later.
     */
     var tooltip = d3.select(".tooltip");
+    var chernoff = d3.select(".face");
+    var chernoffSVG = chernoff.append("svg:svg").attr("height", 200).attr("width", 200);
+
+    var c = d3.chernoff()
+            .face(function(d) { return d.f; })
+            .mouth(function(d) { return d.m; })
+            .nosew(function(d) { return d.nw; })
+            .noseh(function(d) { return d.nh; })
+            .eyew(function(d) { return d.ew; })
+            .eyeh(function(d) { return d.eh; })
+            .brow(function(d) { return d.b; });
 
     /*
         Computes the domains of the variables, so that it can construct x and y axis.
@@ -141,6 +152,11 @@ function drawPlot() {
         These lines compute the minimum and maximum of the variables we'll show as radius and colour.
         I'll use these to normalise the values.
     */
+    var xMax = d3.max(data, function(d) { return d[xVar]; });
+    var xMin = d3.min(data, function(d) { return d[xVar]; });
+    var yMax = d3.max(data, function(d) { return d[yVar]; });
+    var yMin = d3.min(data, function(d) { return d[yVar]; });
+
     var rMax = d3.max(data, function(d) { return d[rVar]; });
     var rMin = d3.min(data, function(d) { return d[rVar]; });
     var cMax = d3.max(data, function(d) { return d[cVar]; });
@@ -172,11 +188,19 @@ function drawPlot() {
                 + cVar + ": " + d[cVar] + "<br/>" + rVar + ": " + d[rVar])
                 .style("left", (d3.event.pageX + 10) + "px")
                 .style("top", (d3.event.pageY - 28) + "px");
+
+            chernoffSVG.selectAll("g.chernoff").data([{f: normaliseValue(d[xVar],xMin,xMax), 
+                m: normaliseValue(d[yVar],yMin,yMax)*2-1, nw: normaliseValue(d[cVar],cMin,cMax), 
+                nh: normaliseValue(d[rVar],rMin,rMax), ew: 1, eh: 0.3, b: 0}]).enter()
+                    .append("svg:g")
+                    .attr("class", "chernoff")
+                    .call(c);
         })
         .on("mouseout", function(d) {
             tooltip.transition()
                 .duration(500)
                 .style("opacity", 0);
+            chernoffSVG.text("");
         });
 
 }
