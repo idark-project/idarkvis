@@ -108,8 +108,7 @@ function drawPlot() {
         Saves the tooltip and chernoff div, because we'll need it later.
     */
     var tooltip = d3.select(".tooltip");
-    var chernoff = d3.select(".face");
-    var chernoffSVG = chernoff.append("svg:svg").attr("height", 200).attr("width", 200);
+    var chernoffSVG = d3.select(".face").select("svg");
 
     var c = d3.chernoff()
             .face(function(d) { return d.f; })
