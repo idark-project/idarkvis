@@ -61,6 +61,10 @@ var x = d3.scale.linear()
 var y = d3.scale.linear()
     .range([height, 0]);
 
+/*
+    Because of defining the tickFormat as "g", big/small numbers get converted to scientific notation.
+    For more information: https://github.com/d3/d3/wiki/Formatting
+*/
 var xAxis = d3.svg.axis()
     .scale(x)
     .orient("bottom")
@@ -71,6 +75,9 @@ var yAxis = d3.svg.axis()
     .orient("left")
     .tickFormat(d3.format("g"));
 
+/*
+    Clears all old plots and creates new ones by calling drawPlot with either 1, 2 or 3 for x, y or z, respectively.
+*/
 function drawPlots() {
     d3.select(".plot1").text("");
     d3.select(".plot2").text("");
@@ -87,34 +94,23 @@ function drawPlots() {
     Every time this function gets called (at pageload and when selecting a new variable), a new plot gets generated.
 */
 function drawPlot(plotDiv, horizontalAxis, verticalAxis) {
+
     /*
         Looks at the dropdown menus and saves their values, so that these values can be looked up in the dataset.
+        First, via a switch-statement, the correct variables are assigned using the horizontalAxis, verticalAxis parameters.
     */
-    
-    if (horizontalAxis === 1){
-        var horizontalSelect = document.getElementById("xVar");
-        switch (verticalAxis){
-            case 1: var verticalSelect = document.getElementById("xVar"); break;
-            case 2: var verticalSelect = document.getElementById("yVar"); break;
-            case 3: var verticalSelect = document.getElementById("zVar"); break;
-            default: break;
-        }
-    } else if (horizontalAxis === 2){
-        var horizontalSelect = document.getElementById("yVar");
-        switch (verticalAxis){
-            case 1: var verticalSelect = document.getElementById("xVar"); break;
-            case 2: var verticalSelect = document.getElementById("yVar"); break;
-            case 3: var verticalSelect = document.getElementById("zVar"); break;
-            default: break;
-        }
-    } else if (horizontalAxis === 3){
-        var horizontalSelect = document.getElementById("zVar");
-        switch (verticalAxis){
-            case 1: var verticalSelect = document.getElementById("xVar"); break;
-            case 2: var verticalSelect = document.getElementById("yVar"); break;
-            case 3: var verticalSelect = document.getElementById("zVar"); break;
-            default: break;
-        }
+    switch (horizontalAxis){
+        case 1: var horizontalSelect = document.getElementById("xVar"); break;
+        case 2: var horizontalSelect = document.getElementById("yVar"); break;
+        case 3: var horizontalSelect = document.getElementById("zVar"); break;
+        default: break;
+    }
+
+    switch (verticalAxis){
+        case 1: var verticalSelect = document.getElementById("xVar"); break;
+        case 2: var verticalSelect = document.getElementById("yVar"); break;
+        case 3: var verticalSelect = document.getElementById("zVar"); break;
+        default: break;
     }
 
     var cSelect = document.getElementById("cVar");

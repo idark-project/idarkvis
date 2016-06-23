@@ -60,6 +60,10 @@ var x = d3.scale.linear()
 var y = d3.scale.linear()
     .range([height, 0]);
 
+/*
+    Because of defining the tickFormat as "g", big/small numbers get converted to scientific notation.
+    For more information: https://github.com/d3/d3/wiki/Formatting
+*/
 var xAxis = d3.svg.axis()
     .scale(x)
     .orient("bottom")
@@ -172,6 +176,8 @@ function drawPlot() {
         Here is where the points are constructed.
         Dots are plotted, where "cx" and "cy" are the coordinates, "r" is the radius and "fill" is the colour.
         The tooltip gets assigned new values and coordinates, according to which dot is hovered over.
+        A new Chernoff face is constructed, based on which data point is hovered over.
+        I've also used some normalising functions here, as chernoff.js usually accepts values between 0 - 1 or -1 - 1.
     */
     svg.selectAll(".dot")
         .data(data)
