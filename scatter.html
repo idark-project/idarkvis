@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+    font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.dot {
+    stroke: #000;
+}
+
+.tooltip {
+    position: absolute;
+    width: 200px;
+    height: 48px;
+    pointer-events: none;
+    background-color: #ffffff;
+}
+
+.chernoff > * {
+    fill: none;
+    stroke: #000;
+}
+
+</style>
+
+<script src="js/d3-v3.5.17.min.js"></script>
+<script src="js/chroma-v1.1.1.min.js"></script>
+<script src="js/scatterplot.js"></script>
+<script src="js/chernoff.js"></script>
+
+<body onload="start()">
+
+<div class="dropdown">
+    X:
+    <select id="xVar" onChange="drawPlot()">
+    </select>
+    
+    Y:
+    <select id="yVar" onChange="drawPlot()">
+    </select>
+    
+    C:
+    <select id="cVar" onChange="drawPlot()">
+    </select>
+    
+    R:
+    <select id="rVar" onChange="drawPlot()">
+    </select>
+    
+</div>
+
+<table>
+    <tr>
+        <td><div class="plot"></div></td>
+        <td><div class="face"><svg height="200" width="200"></svg></div></td>
+    </tr>
+</table>
+
+<div class="tooltip" style="opacity: 0"></div>
+
+</body>
