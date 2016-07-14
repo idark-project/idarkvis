@@ -1,6 +1,12 @@
-var fileName = "data/data.csv";
+var fileNames = ["data/data.csv"];
+
+/*
+    For more info on the color scales used in this code, check http://gka.github.io/chroma.js/.
+*/
+var colorScales = [chroma.scale("OrRd"), chroma.scale(['yellow', '008ae5'])];
 
 var data;
+var datasets = [];
 
 /*
     Function initializes the dropdown menus on the page to a given value
@@ -17,6 +23,16 @@ function addSelect (name, keys, selected) {
 
 }
 
+function checkbox () {
+    if (document.getElementById("mockData").checked){
+        fileNames = ["data/data.csv", "data/MOCK_DATA.csv"];
+        console.log("nyoom");
+    } else {
+        fileNames = ["data/data.csv"];
+    }
+    start ();
+}
+
 /*
     Normalises a value, such that a value in a list [min, max] becomes a value in a list [0,1]
 */
@@ -31,7 +47,7 @@ function normaliseValue (value, min, max) {
 */
 function start () {
     
-    d3.csv(fileName, function(error, dataset) {
+    d3.csv(fileNames[0], function(error, dataset) {
         if (error) throw error;
         
         var keys = d3.keys(dataset[0]);
@@ -42,8 +58,45 @@ function start () {
         addSelect("rVar", keys, 4);
         
         data = dataset;
-        
+
+        for (i = 0; i<dataset.length; i++){
+            data[i]["setNr"] = 0;
+        }
+
+        datasets[0] = data;
+
+        loadDataSets(1);
+    });
+}
+
+function loadDataSets (nr) {
+    if (nr < fileNames.length){
+        d3.csv(fileNames[nr], function(error, dataset) {
+            if (error) throw error;
+
+            for (i = 0; i<dataset.length; i++){
+                dataset[i]["setNr"] = nr;
+                data[data.length] = dataset[i];
+            }
+            
+            datasets[nr] = dataset;
+
+            loadDataSets(nr+1);
+        });
+    } else {
         drawPlot();
+    }
+}
+
+function maxOfDataSet (nr, variable){
+    return d3.max(data, function(d) {
+        if (d.setNr == nr){return d[variable];}
+    });
+}
+
+function minOfDataSet (nr, variable){
+    return d3.min(data, function(d) {
+        if (d.setNr == nr){return d[variable];}
     });
 }
 
@@ -166,12 +219,16 @@ function drawPlot() {
     var rMin = d3.min(data, function(d) { return d[rVar]; });
     var cMax = d3.max(data, function(d) { return d[cVar]; });
     var cMin = d3.min(data, function(d) { return d[cVar]; });
-    
-    /*
-        Red-to-white color scale. For more info, check http://gka.github.io/chroma.js/.
-    */
-    chromaScale = chroma.scale("OrRd");
 
+
+    var cMaxs = [], cMins = [];
+    for (i = 0; i<fileNames.length; i++){
+        cMaxs[i] = maxOfDataSet (i, cVar);
+    }
+    for (i = 0; i<fileNames.length; i++){
+        cMins[i] = minOfDataSet (i, cVar);
+    }
+    
     /*
         Here is where the points are constructed.
         Dots are plotted, where "cx" and "cy" are the coordinates, "r" is the radius and "fill" is the colour.
@@ -186,7 +243,7 @@ function drawPlot() {
         .attr("r", function(d) {return 3+normaliseValue(d[rVar],rMin,rMax)*4;})
         .attr("cx", function(d) { return x(d[xVar]); })
         .attr("cy", function(d) { return y(d[yVar]); })
-        .style("fill", function(d) { return chromaScale(normaliseValue(d[cVar],cMin,cMax)); })
+        .style("fill", function(d) { return colorScales[d.setNr](normaliseValue(d[cVar],cMins[d.setNr],cMaxs[d.setNr])); })
         .on("mouseover", function(d) {
             tooltip.transition()
                 .duration(200)
@@ -197,8 +254,10 @@ function drawPlot() {
                 .style("top", (d3.event.pageY - 28) + "px");
 
             chernoffSVG.selectAll("g.chernoff").data([{f: normaliseValue(d[xVar],xMin,xMax), 
-                m: normaliseValue(d[yVar],yMin,yMax)*2-1, nw: normaliseValue(d[cVar],cMin,cMax), 
-                nh: normaliseValue(d[rVar],rMin,rMax), ew: 1, eh: 0.3, b: 0}]).enter()
+                m: normaliseValue(d[yVar],yMin,yMax)*2-1,
+                nw: normaliseValue(d[cVar],cMin,cMax),
+                nh: normaliseValue(d[rVar],rMin,rMax),
+                ew: 1, eh: 0.3, b: 0}]).enter()
                     .append("svg:g")
                     .attr("class", "chernoff")
                     .call(c);
