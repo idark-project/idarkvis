@@ -8,6 +8,9 @@ var colorScales = [chroma.scale("OrRd"), chroma.scale(['yellow', '008ae5'])];
 var data = [];
 var datasets = [];
 
+var xVar;
+var yVar;
+
 /*
     Function initializes the dropdown menus on the page to a given value
 */
@@ -124,7 +127,15 @@ var yAxis = d3.svg.axis()
 */
 function drawPlot() {
 
-    d3.select(".plot").text("");
+    d3.select(".plot").select("svg").remove();
+    d3.select(".downloads").selectAll("a").remove();
+
+    for (i = 0; i<fileNames.length; i++){
+        d3.select(".downloads").append("a")
+            .attr("href", fileNames[i])
+            .attr("id", fileNames[i])
+            .attr("hidden", true);
+    }
 
     /*
         Looks at the dropdown menus and saves their values, so that these values can be looked up in the dataset.
@@ -134,8 +145,8 @@ function drawPlot() {
     var cSelect = document.getElementById("cVar");
     var rSelect = document.getElementById("rVar");
 
-    var xVar = xSelect.options[xSelect.selectedIndex].value;
-    var yVar = ySelect.options[ySelect.selectedIndex].value;
+    xVar = xSelect.options[xSelect.selectedIndex].value;
+    yVar = ySelect.options[ySelect.selectedIndex].value;
     var cVar = cSelect.options[cSelect.selectedIndex].value;
     var rVar = rSelect.options[rSelect.selectedIndex].value;
     
@@ -145,7 +156,43 @@ function drawPlot() {
         d[cVar] = +d[cVar];
         d[rVar] = +d[rVar];
     });
+
+    var zoom = d3.behavior.zoom().x(x).y(y).on("zoom", refresh);
     
+    function mousedown () {
+        var e = this,
+        origin = d3.mouse(e),
+        rect = svg.append("rect").attr("class", "zoom");
+        
+        d3.select("body").classed("noselect", true);
+        origin[0] = Math.max(0, Math.min(width, origin[0]));
+        origin[1] = Math.max(0, Math.min(height, origin[1]));
+        d3.select(window)
+            .on("mousemove.zoomRect", function() {
+                var m = d3.mouse(e);
+                m[0] = Math.max(0, Math.min(width, m[0]));
+                m[1] = Math.max(0, Math.min(height, m[1]));
+                rect.attr("x", Math.min(origin[0], m[0]))
+                    .attr("y", Math.min(origin[1], m[1]))
+                    .attr("width", Math.abs(m[0] - origin[0]))
+                    .attr("height", Math.abs(m[1] - origin[1]));
+            })
+            .on("mouseup.zoomRect", function() {
+                d3.select(window).on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
+                d3.select("body").classed("noselect", false);
+                var m = d3.mouse(e);
+                m[0] = Math.max(0, Math.min(width, m[0]));
+                m[1] = Math.max(0, Math.min(height, m[1]));
+                if (m[0] !== origin[0] && m[1] !== origin[1]) {
+                    zoom.x(x.domain([origin[0], m[0]].map(x.invert).sort()))
+                        .y(y.domain([origin[1], m[1]].map(y.invert).sort()));
+                }
+                rect.remove();
+                refresh();
+            }, true);
+        d3.event.stopPropagation();
+    }
+
     /*
         Applies margins and width/height to plot svg.
     */
@@ -153,7 +200,23 @@ function drawPlot() {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .on("mousedown", mousedown);
+
+    svg.append("rect")
+        .attr("width", width)
+        .attr("height", height);
+
+    function refresh() {
+        svg.select(".x.axis").call(xAxis);
+        svg.select(".y.axis").call(yAxis);
+        svg.selectAll(".dot")
+            .attr("transform", transform);
+    }
+
+    function transform(d) {
+        return "translate(" + x(d[xVar]) + "," + y(d[yVar]) + ")";
+    }
 
     /*
         Saves the tooltip and chernoff div, because we'll need it later.
@@ -236,6 +299,9 @@ function drawPlot() {
         .attr("cx", function(d) { return x(d[xVar]); })
         .attr("cy", function(d) { return y(d[yVar]); })
         .style("fill", function(d) { return colorScales[d.setNr](normaliseValue(d[cVar],cMins[d.setNr],cMaxs[d.setNr])); })
+        .on("click", function(d) {
+            document.getElementById(fileNames[d.setNr]).click();
+        })
         .on("mouseover", function(d) {
             tooltip.transition()
                 .duration(200)

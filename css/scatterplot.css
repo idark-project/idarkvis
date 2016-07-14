@@ -25,3 +25,12 @@ body {
     fill: none;
     stroke: #000;
 }
+
+rect {
+  fill: #fff;
+}
+
+rect.zoom {
+  stroke: steelblue;
+  fill-opacity: 0.5;
+}
