@@ -5,7 +5,7 @@ var fileNames = ["data/data.csv"];
 */
 var colorScales = [chroma.scale("OrRd"), chroma.scale(['yellow', '008ae5'])];
 
-var data;
+var data = [];
 var datasets = [];
 
 /*
@@ -24,13 +24,13 @@ function addSelect (name, keys, selected) {
 }
 
 function checkbox () {
+    data = [];
     if (document.getElementById("mockData").checked){
         fileNames = ["data/data.csv", "data/MOCK_DATA.csv"];
-        console.log("nyoom");
     } else {
         fileNames = ["data/data.csv"];
     }
-    start ();
+    loadDataSets(0);
 }
 
 /*
@@ -45,7 +45,7 @@ function normaliseValue (value, min, max) {
     Initializes the dropdown menus with addSelect and saves the dataset as the variable data.
     Then calls drawPlot to draw the first plot.
 */
-function start () {
+function onPageLoad () {
     
     d3.csv(fileNames[0], function(error, dataset) {
         if (error) throw error;
@@ -57,15 +57,7 @@ function start () {
         addSelect("cVar", keys, 3);
         addSelect("rVar", keys, 4);
         
-        data = dataset;
-
-        for (i = 0; i<dataset.length; i++){
-            data[i]["setNr"] = 0;
-        }
-
-        datasets[0] = data;
-
-        loadDataSets(1);
+        loadDataSets(0);
     });
 }
 
