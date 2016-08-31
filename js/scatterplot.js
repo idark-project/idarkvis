@@ -36,6 +36,10 @@ function checkbox () {
     loadDataSets(0);
 }
 
+function resetZoom () {
+    drawPlot();
+}
+
 /*
     Normalises a value, such that a value in a list [min, max] becomes a value in a list [0,1]
 */
@@ -211,6 +215,10 @@ function drawPlot() {
         svg.select(".x.axis").call(xAxis);
         svg.select(".y.axis").call(yAxis);
         svg.selectAll(".dot")
+            .filter(function(d) { return !(d[xVar] > x.domain()[0] && d[xVar] < x.domain()[1] 
+                && d[yVar] > y.domain()[0] && d[yVar] < y.domain()[1]); })
+            .remove();
+        svg.selectAll(".dot")
             .attr("transform", transform);
     }
 
@@ -294,10 +302,11 @@ function drawPlot() {
     svg.selectAll(".dot")
         .data(data)
         .enter().append("circle")
+        .filter(function(d) { return d[xVar] > x.domain()[0] && d[xVar] < x.domain()[1] 
+            && d[yVar] > y.domain()[0] && d[yVar] < y.domain()[1]; })
         .attr("class", "dot")
         .attr("r", function(d) {return 3+normaliseValue(d[rVar],rMin,rMax)*4;})
-        .attr("cx", function(d) { return x(d[xVar]); })
-        .attr("cy", function(d) { return y(d[yVar]); })
+        .attr("transform", transform)
         .style("fill", function(d) { return colorScales[d.setNr](normaliseValue(d[cVar],cMins[d.setNr],cMaxs[d.setNr])); })
         .on("click", function(d) {
             document.getElementById(fileNames[d.setNr]).click();
