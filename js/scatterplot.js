@@ -161,7 +161,7 @@ function drawPlot() {
         d[rVar] = +d[rVar];
     });
 
-    var zoom = d3.behavior.zoom().x(x).y(y).on("zoom", refresh);
+    zoom = d3.behavior.zoom().x(x).y(y).on("zoom", refresh);
     
     function mousedown () {
         var e = this,
@@ -220,6 +220,7 @@ function drawPlot() {
             .remove();
         svg.selectAll(".dot")
             .attr("transform", transform);
+        svg.selectAll("text").attr("class","unselectable")
     }
 
     function transform(d) {
@@ -335,5 +336,7 @@ function drawPlot() {
                 .style("opacity", 0);
             chernoffSVG.text("");
         });
+
+    svg.selectAll("text").attr("class","unselectable")
 
 }
