@@ -337,6 +337,4 @@ function drawPlot() {
             chernoffSVG.text("");
         });
 
-    svg.selectAll("text").attr("class","unselectable")
-
 }
