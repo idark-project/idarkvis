@@ -220,7 +220,6 @@ function drawPlot() {
             .remove();
         svg.selectAll(".dot")
             .attr("transform", transform);
-        svg.selectAll("text").attr("class","unselectable")
     }
 
     function transform(d) {
