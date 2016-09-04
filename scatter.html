@@ -1,43 +1,14 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
 
-body {
-    font: 10px sans-serif;
-}
-
-.axis path,
-.axis line {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
-}
-
-.dot {
-    stroke: #000;
-}
-
-.tooltip {
-    position: absolute;
-    width: 200px;
-    height: 48px;
-    pointer-events: none;
-    background-color: #ffffff;
-}
-
-.chernoff > * {
-    fill: none;
-    stroke: #000;
-}
-
-</style>
+<link rel="stylesheet" type="text/css" href="css/scatterplot.css">
 
 <script src="js/d3-v3.5.17.min.js"></script>
 <script src="js/chroma-v1.1.1.min.js"></script>
 <script src="js/scatterplot.js"></script>
 <script src="js/chernoff.js"></script>
 
-<body onload="start()">
+<body onload="onPageLoad()">
 
 <div class="dropdown">
     X:
@@ -55,6 +26,8 @@ body {
     R:
     <select id="rVar" onChange="drawPlot()">
     </select>
+
+    <button id="reset" onClick="resetZoom()">Reset zoom</button>
     
 </div>
 
@@ -66,5 +39,9 @@ body {
 </table>
 
 <div class="tooltip" style="opacity: 0"></div>
+
+<input type="checkbox" id="mockData" onclick="checkbox()"> Add mock data
+
+<div class="downloads"></div>
 
 </body>

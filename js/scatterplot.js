@@ -1,6 +1,15 @@
-var fileName = "data/data.csv";
+var fileNames = ["data/data.csv"];
 
-var data;
+/*
+    For more info on the color scales used in this code, check http://gka.github.io/chroma.js/.
+*/
+var colorScales = [chroma.scale("OrRd"), chroma.scale(['yellow', '008ae5'])];
+
+var data = [];
+var datasets = [];
+
+var xVar;
+var yVar;
 
 /*
     Function initializes the dropdown menus on the page to a given value
@@ -17,6 +26,20 @@ function addSelect (name, keys, selected) {
 
 }
 
+function checkbox () {
+    data = [];
+    if (document.getElementById("mockData").checked){
+        fileNames = ["data/data.csv", "data/MOCK_DATA.csv"];
+    } else {
+        fileNames = ["data/data.csv"];
+    }
+    loadDataSets(0);
+}
+
+function resetZoom () {
+    drawPlot();
+}
+
 /*
     Normalises a value, such that a value in a list [min, max] becomes a value in a list [0,1]
 */
@@ -29,9 +52,9 @@ function normaliseValue (value, min, max) {
     Initializes the dropdown menus with addSelect and saves the dataset as the variable data.
     Then calls drawPlot to draw the first plot.
 */
-function start () {
+function onPageLoad () {
     
-    d3.csv(fileName, function(error, dataset) {
+    d3.csv(fileNames[0], function(error, dataset) {
         if (error) throw error;
         
         var keys = d3.keys(dataset[0]);
@@ -41,9 +64,38 @@ function start () {
         addSelect("cVar", keys, 3);
         addSelect("rVar", keys, 4);
         
-        data = dataset;
-        
+        loadDataSets(0);
+    });
+}
+
+function loadDataSets (nr) {
+    if (nr < fileNames.length){
+        d3.csv(fileNames[nr], function(error, dataset) {
+            if (error) throw error;
+
+            for (i = 0; i<dataset.length; i++){
+                dataset[i]["setNr"] = nr;
+                data[data.length] = dataset[i];
+            }
+            
+            datasets[nr] = dataset;
+
+            loadDataSets(nr+1);
+        });
+    } else {
         drawPlot();
+    }
+}
+
+function maxOfDataSet (nr, variable){
+    return d3.max(data, function(d) {
+        if (d.setNr == nr){return d[variable];}
+    });
+}
+
+function minOfDataSet (nr, variable){
+    return d3.min(data, function(d) {
+        if (d.setNr == nr){return d[variable];}
     });
 }
 
@@ -79,7 +131,15 @@ var yAxis = d3.svg.axis()
 */
 function drawPlot() {
 
-    d3.select(".plot").text("");
+    d3.select(".plot").select("svg").remove();
+    d3.select(".downloads").selectAll("a").remove();
+
+    for (i = 0; i<fileNames.length; i++){
+        d3.select(".downloads").append("a")
+            .attr("href", fileNames[i])
+            .attr("id", fileNames[i])
+            .attr("hidden", true);
+    }
 
     /*
         Looks at the dropdown menus and saves their values, so that these values can be looked up in the dataset.
@@ -89,8 +149,8 @@ function drawPlot() {
     var cSelect = document.getElementById("cVar");
     var rSelect = document.getElementById("rVar");
 
-    var xVar = xSelect.options[xSelect.selectedIndex].value;
-    var yVar = ySelect.options[ySelect.selectedIndex].value;
+    xVar = xSelect.options[xSelect.selectedIndex].value;
+    yVar = ySelect.options[ySelect.selectedIndex].value;
     var cVar = cSelect.options[cSelect.selectedIndex].value;
     var rVar = rSelect.options[rSelect.selectedIndex].value;
     
@@ -100,7 +160,43 @@ function drawPlot() {
         d[cVar] = +d[cVar];
         d[rVar] = +d[rVar];
     });
+
+    zoom = d3.behavior.zoom().x(x).y(y).on("zoom", refresh);
     
+    function mousedown () {
+        var e = this,
+        origin = d3.mouse(e),
+        rect = svg.append("rect").attr("class", "zoom");
+        
+        d3.select("body").classed("noselect", true);
+        origin[0] = Math.max(0, Math.min(width, origin[0]));
+        origin[1] = Math.max(0, Math.min(height, origin[1]));
+        d3.select(window)
+            .on("mousemove.zoomRect", function() {
+                var m = d3.mouse(e);
+                m[0] = Math.max(0, Math.min(width, m[0]));
+                m[1] = Math.max(0, Math.min(height, m[1]));
+                rect.attr("x", Math.min(origin[0], m[0]))
+                    .attr("y", Math.min(origin[1], m[1]))
+                    .attr("width", Math.abs(m[0] - origin[0]))
+                    .attr("height", Math.abs(m[1] - origin[1]));
+            })
+            .on("mouseup.zoomRect", function() {
+                d3.select(window).on("mousemove.zoomRect", null).on("mouseup.zoomRect", null);
+                d3.select("body").classed("noselect", false);
+                var m = d3.mouse(e);
+                m[0] = Math.max(0, Math.min(width, m[0]));
+                m[1] = Math.max(0, Math.min(height, m[1]));
+                if (m[0] !== origin[0] && m[1] !== origin[1]) {
+                    zoom.x(x.domain([origin[0], m[0]].map(x.invert).sort()))
+                        .y(y.domain([origin[1], m[1]].map(y.invert).sort()));
+                }
+                rect.remove();
+                refresh();
+            }, true);
+        d3.event.stopPropagation();
+    }
+
     /*
         Applies margins and width/height to plot svg.
     */
@@ -108,7 +204,28 @@ function drawPlot() {
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .on("mousedown", mousedown);
+
+    svg.append("rect")
+        .attr("width", width)
+        .attr("height", height);
+
+    function refresh() {
+        svg.select(".x.axis").call(xAxis);
+        svg.select(".y.axis").call(yAxis);
+        svg.selectAll(".dot")
+            .filter(function(d) { return !(d[xVar] > x.domain()[0] && d[xVar] < x.domain()[1] 
+                && d[yVar] > y.domain()[0] && d[yVar] < y.domain()[1]); })
+            .remove();
+        svg.selectAll(".dot")
+            .attr("transform", transform);
+        svg.selectAll("text").attr("class","unselectable")
+    }
+
+    function transform(d) {
+        return "translate(" + x(d[xVar]) + "," + y(d[yVar]) + ")";
+    }
 
     /*
         Saves the tooltip and chernoff div, because we'll need it later.
@@ -166,12 +283,16 @@ function drawPlot() {
     var rMin = d3.min(data, function(d) { return d[rVar]; });
     var cMax = d3.max(data, function(d) { return d[cVar]; });
     var cMin = d3.min(data, function(d) { return d[cVar]; });
-    
-    /*
-        Red-to-white color scale. For more info, check http://gka.github.io/chroma.js/.
-    */
-    chromaScale = chroma.scale("OrRd");
 
+
+    var cMaxs = [], cMins = [];
+    for (i = 0; i<fileNames.length; i++){
+        cMaxs[i] = maxOfDataSet (i, cVar);
+    }
+    for (i = 0; i<fileNames.length; i++){
+        cMins[i] = minOfDataSet (i, cVar);
+    }
+    
     /*
         Here is where the points are constructed.
         Dots are plotted, where "cx" and "cy" are the coordinates, "r" is the radius and "fill" is the colour.
@@ -182,11 +303,15 @@ function drawPlot() {
     svg.selectAll(".dot")
         .data(data)
         .enter().append("circle")
+        .filter(function(d) { return d[xVar] > x.domain()[0] && d[xVar] < x.domain()[1] 
+            && d[yVar] > y.domain()[0] && d[yVar] < y.domain()[1]; })
         .attr("class", "dot")
         .attr("r", function(d) {return 3+normaliseValue(d[rVar],rMin,rMax)*4;})
-        .attr("cx", function(d) { return x(d[xVar]); })
-        .attr("cy", function(d) { return y(d[yVar]); })
-        .style("fill", function(d) { return chromaScale(normaliseValue(d[cVar],cMin,cMax)); })
+        .attr("transform", transform)
+        .style("fill", function(d) { return colorScales[d.setNr](normaliseValue(d[cVar],cMins[d.setNr],cMaxs[d.setNr])); })
+        .on("click", function(d) {
+            document.getElementById(fileNames[d.setNr]).click();
+        })
         .on("mouseover", function(d) {
             tooltip.transition()
                 .duration(200)
@@ -197,8 +322,10 @@ function drawPlot() {
                 .style("top", (d3.event.pageY - 28) + "px");
 
             chernoffSVG.selectAll("g.chernoff").data([{f: normaliseValue(d[xVar],xMin,xMax), 
-                m: normaliseValue(d[yVar],yMin,yMax)*2-1, nw: normaliseValue(d[cVar],cMin,cMax), 
-                nh: normaliseValue(d[rVar],rMin,rMax), ew: 1, eh: 0.3, b: 0}]).enter()
+                m: normaliseValue(d[yVar],yMin,yMax)*2-1,
+                nw: normaliseValue(d[cVar],cMin,cMax),
+                nh: normaliseValue(d[rVar],rMin,rMax),
+                ew: 1, eh: 0.3, b: 0}]).enter()
                     .append("svg:g")
                     .attr("class", "chernoff")
                     .call(c);
