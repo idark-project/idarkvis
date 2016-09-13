@@ -1,4 +1,9 @@
 var fileNames = ["data/data.csv"];
+
+/*
+    I use these values to keep track of how many face variables there are, if a face has already been drawn
+    and which variable was drawn last.
+*/
 var faceValues = 7;
 var chernoffIsSet = false;
 var currentFace;
@@ -319,9 +324,28 @@ function drawPlot() {
         cMins[i] = minOfDataSet (i, cVar);
     }
 
+    /*
+        This makes the tool redraw the Chernoff face when variables are changed.
+    */
     if (chernoffIsSet){
-        console.log("nyoom");
         setChernoff(currentFace, chernoffSVG);
+    }
+
+    /*
+        Draws a new Chernoff face, using the face variables defined.
+    */
+    function setChernoff (d, chernoffSVG){
+        chernoffSVG.text("");
+        chernoffSVG.selectAll("g.chernoff").data([{f: normaliseValue(d[faceVar[0]],faceMin[0],faceMax[0]), 
+            m: normaliseValue(d[faceVar[1]],faceMin[1],faceMax[1])*2-1,
+            nw: normaliseValue(d[faceVar[2]],faceMin[2],faceMax[2])*2-1,
+            nh: normaliseValue(d[faceVar[3]],faceMin[3],faceMax[3]),
+            ew: normaliseValue(d[faceVar[4]],faceMin[4],faceMax[4]),
+            eh: normaliseValue(d[faceVar[5]],faceMin[5],faceMax[5]),
+            b: normaliseValue(d[faceVar[6]],faceMin[6],faceMax[6])*2-1}]).enter()
+                .append("svg:g")
+                .attr("class", "chernoff")
+                .call(c);
     }
     
     /*
@@ -360,23 +384,6 @@ function drawPlot() {
             tooltip.transition()
                 .duration(500)
                 .style("opacity", 0);
-            //chernoffSVG.text("");
         });
-
-        function setChernoff (d, chernoffSVG){
-            chernoffSVG.text("");
-            chernoffSVG.selectAll("g.chernoff").data([{f: normaliseValue(d[faceVar[0]],faceMin[0],faceMax[0]), 
-                m: normaliseValue(d[faceVar[1]],faceMin[1],faceMax[1])*2-1,
-                nw: normaliseValue(d[faceVar[2]],faceMin[2],faceMax[2])*2-1,
-                nh: normaliseValue(d[faceVar[3]],faceMin[3],faceMax[3]),
-                ew: normaliseValue(d[faceVar[4]],faceMin[4],faceMax[4]),
-                eh: normaliseValue(d[faceVar[5]],faceMin[5],faceMax[5]),
-                b: normaliseValue(d[faceVar[6]],faceMin[6],faceMax[6])*2-1}]).enter()
-                    .append("svg:g")
-                    .attr("class", "chernoff")
-                    .call(c);
-                //console.log(faceMin[5], faceMax[5]);
-                //console.log(faceMax[6]-faceMin[6]);
-        }
 
 }
