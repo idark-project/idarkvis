@@ -1,6 +1,14 @@
 var fileNames = ["data/data.csv"];
 
 /*
+    I use these values to keep track of how many face variables there are, if a face has already been drawn
+    and which variable was drawn last.
+*/
+var faceValues = 7;
+var chernoffIsSet = false;
+var currentFace;
+
+/*
     For more info on the color scales used in this code, check http://gka.github.io/chroma.js/.
 */
 var colorScales = [chroma.scale("OrRd"), chroma.scale(['yellow', '008ae5'])];
@@ -63,6 +71,10 @@ function onPageLoad () {
         addSelect("yVar", keys, 2);
         addSelect("cVar", keys, 3);
         addSelect("rVar", keys, 4);
+
+        for (var i=0; i<faceValues; i++){
+            addSelect("faceVar" + i, keys, 5+i);
+        }
         
         loadDataSets(0);
     });
@@ -148,17 +160,30 @@ function drawPlot() {
     var ySelect = document.getElementById("yVar");
     var cSelect = document.getElementById("cVar");
     var rSelect = document.getElementById("rVar");
+    var faceSelect = [];
+
+    for (var i=0;i<faceValues;i++){
+        faceSelect[i] = document.getElementById("faceVar" + i);
+    }
 
     xVar = xSelect.options[xSelect.selectedIndex].value;
     yVar = ySelect.options[ySelect.selectedIndex].value;
     var cVar = cSelect.options[cSelect.selectedIndex].value;
     var rVar = rSelect.options[rSelect.selectedIndex].value;
+    var faceVar = [];
+
+    for (var i=0;i<faceValues;i++){
+        faceVar[i] = faceSelect[i].options[faceSelect[i].selectedIndex].value;
+    }
     
     data.forEach(function(d) {
         d[xVar] = +d[xVar];
         d[yVar] = +d[yVar];
         d[cVar] = +d[cVar];
         d[rVar] = +d[rVar];
+        for (i=0;i<faceValues;i++){
+            d[faceVar[i]] = +d[faceVar[i]];
+        }
     });
 
     zoom = d3.behavior.zoom().x(x).y(y).on("zoom", refresh);
@@ -283,6 +308,13 @@ function drawPlot() {
     var cMax = d3.max(data, function(d) { return d[cVar]; });
     var cMin = d3.min(data, function(d) { return d[cVar]; });
 
+    var faceMax = [];
+    var faceMin = [];
+
+    for (var i=0;i<faceValues;i++){
+        faceMax[i] = d3.max(data, function(d) { return d[faceVar[i]]; });
+        faceMin[i] = d3.min(data, function(d) { return d[faceVar[i]]; });
+    }
 
     var cMaxs = [], cMins = [];
     for (i = 0; i<fileNames.length; i++){
@@ -290,6 +322,30 @@ function drawPlot() {
     }
     for (i = 0; i<fileNames.length; i++){
         cMins[i] = minOfDataSet (i, cVar);
+    }
+
+    /*
+        This makes the tool redraw the Chernoff face when variables are changed.
+    */
+    if (chernoffIsSet){
+        setChernoff(currentFace, chernoffSVG);
+    }
+
+    /*
+        Draws a new Chernoff face, using the face variables defined.
+    */
+    function setChernoff (d, chernoffSVG){
+        chernoffSVG.text("");
+        chernoffSVG.selectAll("g.chernoff").data([{f: normaliseValue(d[faceVar[0]],faceMin[0],faceMax[0]), 
+            m: normaliseValue(d[faceVar[1]],faceMin[1],faceMax[1])*2-1,
+            nw: normaliseValue(d[faceVar[2]],faceMin[2],faceMax[2])*2-1,
+            nh: normaliseValue(d[faceVar[3]],faceMin[3],faceMax[3]),
+            ew: normaliseValue(d[faceVar[4]],faceMin[4],faceMax[4]),
+            eh: normaliseValue(d[faceVar[5]],faceMin[5],faceMax[5]),
+            b: normaliseValue(d[faceVar[6]],faceMin[6],faceMax[6])*2-1}]).enter()
+                .append("svg:g")
+                .attr("class", "chernoff")
+                .call(c);
     }
     
     /*
@@ -320,20 +376,14 @@ function drawPlot() {
                 .style("left", (d3.event.pageX + 10) + "px")
                 .style("top", (d3.event.pageY - 28) + "px");
 
-            chernoffSVG.selectAll("g.chernoff").data([{f: normaliseValue(d[xVar],xMin,xMax), 
-                m: normaliseValue(d[yVar],yMin,yMax)*2-1,
-                nw: normaliseValue(d[cVar],cMin,cMax),
-                nh: normaliseValue(d[rVar],rMin,rMax),
-                ew: 1, eh: 0.3, b: 0}]).enter()
-                    .append("svg:g")
-                    .attr("class", "chernoff")
-                    .call(c);
+            setChernoff(d, chernoffSVG);
+            currentFace = d;
+            chernoffIsSet = true;
         })
         .on("mouseout", function(d) {
             tooltip.transition()
                 .duration(500)
                 .style("opacity", 0);
-            chernoffSVG.text("");
         });
 
 }
