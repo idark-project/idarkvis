@@ -63,6 +63,13 @@ function onPageLoad () {
         addSelect("yVar", keys, 2);
         addSelect("cVar", keys, 3);
         addSelect("rVar", keys, 4);
+
+        addSelect("faceVar1", keys, 5);
+        addSelect("faceVar2", keys, 6);
+        addSelect("faceVar3", keys, 7);
+        addSelect("faceVar4", keys, 8);
+        addSelect("faceVar5", keys, 9);
+        addSelect("faceVar6", keys, 10);
         
         loadDataSets(0);
     });
@@ -148,17 +155,30 @@ function drawPlot() {
     var ySelect = document.getElementById("yVar");
     var cSelect = document.getElementById("cVar");
     var rSelect = document.getElementById("rVar");
+    var faceSelect = [];
+
+    for (i=0;i<6;i++){
+        faceSelect[i] = document.getElementById("faceVar" + i);
+    }
 
     xVar = xSelect.options[xSelect.selectedIndex].value;
     yVar = ySelect.options[ySelect.selectedIndex].value;
     var cVar = cSelect.options[cSelect.selectedIndex].value;
     var rVar = rSelect.options[rSelect.selectedIndex].value;
+    var faceVar = [];
+
+    for (i=0;i<6;i++){
+        faceVar[i] = faceSelect[i].options[faceSelect[i].selectedIndex].value;
+    }
     
     data.forEach(function(d) {
         d[xVar] = +d[xVar];
         d[yVar] = +d[yVar];
         d[cVar] = +d[cVar];
         d[rVar] = +d[rVar];
+        for (i=0;i<6;i++){
+            d[faceVar[i]] = +d[faceVar[i]];
+        }
     });
 
     zoom = d3.behavior.zoom().x(x).y(y).on("zoom", refresh);
@@ -312,6 +332,7 @@ function drawPlot() {
             document.getElementById(fileNames[d.setNr]).click();
         })
         .on("mouseover", function(d) {
+            chernoffSVG.text("");
             tooltip.transition()
                 .duration(200)
                 .style("opacity", .9);
@@ -333,7 +354,7 @@ function drawPlot() {
             tooltip.transition()
                 .duration(500)
                 .style("opacity", 0);
-            chernoffSVG.text("");
+            //chernoffSVG.text("");
         });
 
 }
