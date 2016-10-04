@@ -6,7 +6,54 @@ var fileNames = ["data/data.csv"];
 */
 var faceValues = 7;
 var chernoffIsSet = false;
+var isMultiplot = false;
+var useChernoff = true;
 var currentFace;
+var margin;
+var x, y;
+var xAxis, yAxis;
+
+/*
+    Initialisation methods for checkboxes.
+*/
+
+function mockDataBox () {
+    data = [];
+    if(d3.select("#mockDataBox").property("checked")){
+        fileNames = ["data/data.csv", "data/MOCK_DATA.csv"];
+    } else {
+        fileNames = ["data/data.csv"];
+    }
+    loadDataSets(0);
+}
+
+function chernoffBox () {
+    data = [];
+    if(d3.select("#chernoffBox").property("checked")){
+        d3.select(".chernoffTable")
+                .transition()
+                .duration(500)
+                .style("opacity", 1);
+        useChernoff = true;
+    } else {
+        d3.select(".chernoffTable")
+                .transition()
+                .duration(500)
+                .style("opacity", 0);
+        useChernoff = false;
+    }
+}
+
+function multiplotBox () {
+    if(d3.select("#multiplotBox").property("checked")){
+        isMultiplot = true;
+        d3.select("#hiddenVar").style("display", "initial");
+    } else {
+        isMultiplot = false;
+        d3.select("#hiddenVar").style("display", "none");
+    }
+    onPageLoad ();
+}
 
 /*
     For more info on the color scales used in this code, check http://gka.github.io/chroma.js/.
@@ -16,8 +63,8 @@ var colorScales = [chroma.scale("OrRd"), chroma.scale(['yellow', '008ae5'])];
 var data = [];
 var datasets = [];
 
-var xVar;
-var yVar;
+//var xVar;
+//var yVar;
 
 /*
     Function initializes the dropdown menus on the page to a given value
@@ -34,18 +81,8 @@ function addSelect (name, keys, selected) {
 
 }
 
-function checkbox () {
-    data = [];
-    if (document.getElementById("mockData").checked){
-        fileNames = ["data/data.csv", "data/MOCK_DATA.csv"];
-    } else {
-        fileNames = ["data/data.csv"];
-    }
-    loadDataSets(0);
-}
-
 function resetZoom () {
-    drawPlot();
+    drawPlots();
 }
 
 /*
@@ -57,23 +94,35 @@ function normaliseValue (value, min, max) {
 
 /*
     Function gets called on pageload.
-    Initializes the dropdown menus with addSelect and saves the dataset as the variable data.
+    Initialises the checkboxes.
+    Then initialises the dropdown menus with addSelect and saves the dataset as the variable data.
     Then calls drawPlot to draw the first plot.
 */
 function onPageLoad () {
+
+    d3.select("#mockDataBox").on("change",mockDataBox);
+    d3.select("#chernoffBox").on("change",chernoffBox);
+    d3.select("#multiplotBox").on("change",multiplotBox);
     
     d3.csv(fileNames[0], function(error, dataset) {
         if (error) throw error;
         
         var keys = d3.keys(dataset[0]);
+        a = 0;
         
         addSelect("xVar", keys, 1);
         addSelect("yVar", keys, 2);
-        addSelect("cVar", keys, 3);
-        addSelect("rVar", keys, 4);
+
+        if (isMultiplot){
+            addSelect("zVar", keys, 3);
+            a=1;
+        }
+
+        addSelect("cVar", keys, 3+a);
+        addSelect("rVar", keys, 4+a);
 
         for (var i=0; i<faceValues; i++){
-            addSelect("faceVar" + i, keys, 5+i);
+            addSelect("faceVar" + i, keys, 5+i+a);
         }
         
         loadDataSets(0);
@@ -95,7 +144,7 @@ function loadDataSets (nr) {
             loadDataSets(nr+1);
         });
     } else {
-        drawPlot();
+        drawPlots();
     }
 }
 
@@ -111,39 +160,8 @@ function minOfDataSet (nr, variable){
     });
 }
 
-/*
-    Initializing steps for the scatterplot.
-*/
-var margin = {top: 20, right: 20, bottom: 30, left: 40},
-    width = 960 - margin.left - margin.right,
-    height = 500 - margin.top - margin.bottom;
 
-var x = d3.scale.linear()
-    .range([0, width]);
-
-var y = d3.scale.linear()
-    .range([height, 0]);
-
-/*
-    Because of defining the tickFormat as "g", big/small numbers get converted to scientific notation.
-    For more information: https://github.com/d3/d3/wiki/Formatting
-*/
-var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom")
-    .tickFormat(d3.format("g"));
-
-var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left")
-    .tickFormat(d3.format("g"));
-
-/*
-    Every time this function gets called (at pageload and when selecting a new variable), a new plot gets generated.
-*/
-function drawPlot() {
-
-    d3.select(".plot").select("svg").remove();
+function drawPlots () {
     d3.select(".downloads").selectAll("a").remove();
 
     for (i = 0; i<fileNames.length; i++){
@@ -153,11 +171,75 @@ function drawPlot() {
             .attr("hidden", true);
     }
 
+    d3.select(".plot1").select("svg").remove();
+    d3.select(".plot2").select("svg").remove();
+    d3.select(".plot3").select("svg").remove();
+    d3.select(".plot4").select("svg").remove();
+
+    if (isMultiplot){
+        margin = {top: 20, right: 20, bottom: 30, left: 40},
+            width = 300 - margin.left - margin.right,
+            height = 300 - margin.top - margin.bottom;
+    } else {
+        margin = {top: 20, right: 20, bottom: 20, left: 20},
+            width = 700 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+    }
+
+    drawPlot("plot1", 1, 2);
+    if (isMultiplot){
+        drawPlot("plot2", 3, 2);
+        drawPlot("plot3", 1, 3);
+        drawPlot("plot4", 3, 3);
+    }
+}
+
+/*
+    Every time this function gets called (at pageload and when selecting a new variable), a new plot gets generated.
+*/
+function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
+
+    /*
+        Looks at the dropdown menus and saves their values, so that these values can be looked up in the dataset.
+        First, via a switch-statement, the correct variables are assigned using the horizontalAxis, verticalAxis parameters.
+    */
+    switch (horizontalAxis){
+        case 1: var horizontalSelect = document.getElementById("xVar"); break;
+        case 2: var horizontalSelect = document.getElementById("yVar"); break;
+        case 3: var horizontalSelect = document.getElementById("zVar"); break;
+        default: break;
+    }
+
+    switch (verticalAxis){
+        case 1: var verticalSelect = document.getElementById("xVar"); break;
+        case 2: var verticalSelect = document.getElementById("yVar"); break;
+        case 3: var verticalSelect = document.getElementById("zVar"); break;
+        default: break;
+    }
+
+    x = d3.scale.linear()
+        .range([0, width]);
+
+    y = d3.scale.linear()
+        .range([height, 0]);
+
+    /*
+        Because of defining the tickFormat as "g", big/small numbers get converted to scientific notation.
+        For more information: https://github.com/d3/d3/wiki/Formatting
+    */
+    xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom")
+        .tickFormat(d3.format("g"));
+
+    yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .tickFormat(d3.format("g"));
+
     /*
         Looks at the dropdown menus and saves their values, so that these values can be looked up in the dataset.
     */
-    var xSelect = document.getElementById("xVar");
-    var ySelect = document.getElementById("yVar");
     var cSelect = document.getElementById("cVar");
     var rSelect = document.getElementById("rVar");
     var faceSelect = [];
@@ -166,8 +248,8 @@ function drawPlot() {
         faceSelect[i] = document.getElementById("faceVar" + i);
     }
 
-    xVar = xSelect.options[xSelect.selectedIndex].value;
-    yVar = ySelect.options[ySelect.selectedIndex].value;
+    var horizontalVar = horizontalSelect.options[horizontalSelect.selectedIndex].value;
+    var verticalVar = verticalSelect.options[verticalSelect.selectedIndex].value;
     var cVar = cSelect.options[cSelect.selectedIndex].value;
     var rVar = rSelect.options[rSelect.selectedIndex].value;
     var faceVar = [];
@@ -177,8 +259,8 @@ function drawPlot() {
     }
     
     data.forEach(function(d) {
-        d[xVar] = +d[xVar];
-        d[yVar] = +d[yVar];
+        d[horizontalVar] = +d[horizontalVar];
+        d[verticalVar] = +d[verticalVar];
         d[cVar] = +d[cVar];
         d[rVar] = +d[rVar];
         for (i=0;i<faceValues;i++){
@@ -225,7 +307,7 @@ function drawPlot() {
     /*
         Applies margins and width/height to plot svg.
     */
-    var svg = d3.select(".plot").append("svg")
+    var svg = d3.select("." + plotDiv).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
@@ -240,15 +322,15 @@ function drawPlot() {
         svg.select(".x.axis").call(xAxis);
         svg.select(".y.axis").call(yAxis);
         svg.selectAll(".dot")
-            .filter(function(d) { return !(d[xVar] > x.domain()[0] && d[xVar] < x.domain()[1] 
-                && d[yVar] > y.domain()[0] && d[yVar] < y.domain()[1]); })
+            .filter(function(d) { return !(d[horizontalVar] >= x.domain()[0] && d[horizontalVar] <= x.domain()[1] 
+                && d[verticalVar] >= y.domain()[0] && d[verticalVar] <= y.domain()[1]); })
             .remove();
         svg.selectAll(".dot")
             .attr("transform", transform);
     }
 
     function transform(d) {
-        return "translate(" + x(d[xVar]) + "," + y(d[yVar]) + ")";
+        return "translate(" + x(d[horizontalVar]) + "," + y(d[verticalVar]) + ")";
     }
 
     /*
@@ -269,8 +351,8 @@ function drawPlot() {
     /*
         Computes the domains of the variables, so that it can construct x and y axis.
     */
-    x.domain(d3.extent(data, function(d) { return d[xVar]; })).nice();
-    y.domain(d3.extent(data, function(d) { return d[yVar]; })).nice();
+    x.domain(d3.extent(data, function(d) { return d[horizontalVar]; })).nice();
+    y.domain(d3.extent(data, function(d) { return d[verticalVar]; })).nice();
 
     svg.append("g")
         .attr("class", "x axis")
@@ -281,7 +363,7 @@ function drawPlot() {
         .attr("x", width)
         .attr("y", -6)
         .style("text-anchor", "end")
-        .text(xVar);
+        .text(horizontalVar);
 
     svg.append("g")
         .attr("class", "y axis")
@@ -292,16 +374,16 @@ function drawPlot() {
         .attr("y", 6)
         .attr("dy", ".71em")
         .style("text-anchor", "end")
-        .text(yVar);
+        .text(verticalVar);
 
     /*
         These lines compute the minimum and maximum of the variables we'll show as radius and colour.
         I'll use these to normalise the values.
     */
-    var xMax = d3.max(data, function(d) { return d[xVar]; });
-    var xMin = d3.min(data, function(d) { return d[xVar]; });
-    var yMax = d3.max(data, function(d) { return d[yVar]; });
-    var yMin = d3.min(data, function(d) { return d[yVar]; });
+    var horizontalMax = d3.max(data, function(d) { return d[horizontalVar]; });
+    var horizontalMin = d3.min(data, function(d) { return d[horizontalVar]; });
+    var verticalMax = d3.max(data, function(d) { return d[verticalVar]; });
+    var verticalMin = d3.min(data, function(d) { return d[verticalVar]; });
 
     var rMax = d3.max(data, function(d) { return d[rVar]; });
     var rMin = d3.min(data, function(d) { return d[rVar]; });
@@ -358,8 +440,6 @@ function drawPlot() {
     svg.selectAll(".dot")
         .data(data)
         .enter().append("circle")
-        .filter(function(d) { return d[xVar] > x.domain()[0] && d[xVar] < x.domain()[1] 
-            && d[yVar] > y.domain()[0] && d[yVar] < y.domain()[1]; })
         .attr("class", "dot")
         .attr("r", function(d) {return 3+normaliseValue(d[rVar],rMin,rMax)*4;})
         .attr("transform", transform)
@@ -371,14 +451,16 @@ function drawPlot() {
             tooltip.transition()
                 .duration(200)
                 .style("opacity", .9);
-            tooltip.html(xVar + ": " + d[xVar] + "<br/>" + yVar + ": " + d[yVar] + "<br/>"
+            tooltip.html(horizontalVar + ": " + d[horizontalVar] + "<br/>" + verticalVar + ": " + d[verticalVar] + "<br/>"
                 + cVar + ": " + d[cVar] + "<br/>" + rVar + ": " + d[rVar])
                 .style("left", (d3.event.pageX + 10) + "px")
                 .style("top", (d3.event.pageY - 28) + "px");
 
-            setChernoff(d, chernoffSVG);
-            currentFace = d;
-            chernoffIsSet = true;
+            if (useChernoff){
+                setChernoff(d, chernoffSVG);
+                currentFace = d;
+                chernoffIsSet = true;
+            }
         })
         .on("mouseout", function(d) {
             tooltip.transition()
