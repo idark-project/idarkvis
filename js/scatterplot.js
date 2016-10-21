@@ -10,7 +10,7 @@ var isMultiplot = false;
 var useChernoff = true;
 var currentFace;
 var margin;
-var x, y;
+var x = [], y = [];
 var xAxis, yAxis;
 
 /*
@@ -52,7 +52,7 @@ function multiplotBox () {
         isMultiplot = false;
         d3.select("#hiddenVar").style("display", "none");
     }
-    onPageLoad ();
+    drawPlots ();
 }
 
 /*
@@ -108,16 +108,12 @@ function onPageLoad () {
         if (error) throw error;
         
         var keys = d3.keys(dataset[0]);
-        a = 0;
+        
+        a=1;
         
         addSelect("xVar", keys, 1);
         addSelect("yVar", keys, 2);
-
-        if (isMultiplot){
-            addSelect("zVar", keys, 3);
-            a=1;
-        }
-
+        addSelect("zVar", keys, 3);
         addSelect("cVar", keys, 3+a);
         addSelect("rVar", keys, 4+a);
 
@@ -186,18 +182,18 @@ function drawPlots () {
             height = 500 - margin.top - margin.bottom;
     }
 
-    drawPlot("plot1", 1, 2);
+    drawPlot(0, "plot1", 1, 2);
     if (isMultiplot){
-        drawPlot("plot2", 3, 2);
-        drawPlot("plot3", 1, 3);
-        drawPlot("plot4", 3, 3);
+        drawPlot(1, "plot2", 3, 2);
+        drawPlot(2, "plot3", 1, 3);
+        drawPlot(3, "plot4", 3, 3);
     }
 }
 
 /*
     Every time this function gets called (at pageload and when selecting a new variable), a new plot gets generated.
 */
-function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
+function drawPlot (plotId, plotDiv, horizontalAxis, verticalAxis) {
 
     /*
         Looks at the dropdown menus and saves their values, so that these values can be looked up in the dataset.
@@ -217,10 +213,10 @@ function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
         default: break;
     }
 
-    x = d3.scale.linear()
+    x[plotId] = d3.scale.linear()
         .range([0, width]);
 
-    y = d3.scale.linear()
+    y[plotId] = d3.scale.linear()
         .range([height, 0]);
 
     /*
@@ -228,12 +224,12 @@ function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
         For more information: https://github.com/d3/d3/wiki/Formatting
     */
     xAxis = d3.svg.axis()
-        .scale(x)
+        .scale(x[plotId])
         .orient("bottom")
         .tickFormat(d3.format("g"));
 
     yAxis = d3.svg.axis()
-        .scale(y)
+        .scale(y[plotId])
         .orient("left")
         .tickFormat(d3.format("g"));
 
@@ -268,12 +264,15 @@ function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
         }
     });
 
-    zoom = d3.behavior.zoom().x(x).y(y).on("zoom", refresh);
+    zoom = d3.behavior.zoom().x(x[plotId]).y(y[plotId]).on("zoom", refresh);
     
     function mousedown () {
         var e = this,
         origin = d3.mouse(e),
         rect = svg.append("rect").attr("class", "zoom");
+
+        tempX = d3.scale.linear().range([0, width]);
+        tempY = d3.scale.linear().range([height, 0]);
         
         d3.select("body").classed("noselect", true);
         origin[0] = Math.max(0, Math.min(width, origin[0]));
@@ -295,8 +294,8 @@ function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
                 m[0] = Math.max(0, Math.min(width, m[0]));
                 m[1] = Math.max(0, Math.min(height, m[1]));
                 if (m[0] !== origin[0] && m[1] !== origin[1]) {
-                    zoom.x(x.domain([origin[0], m[0]].map(x.invert).sort()))
-                        .y(y.domain([origin[1], m[1]].map(y.invert).sort()));
+                    zoom.x(x[plotId].domain([origin[0], m[0]].map(x[plotId].invert).sort()))
+                        .y(y[plotId].domain([origin[1], m[1]].map(y[plotId].invert).sort()));
                 }
                 rect.remove();
                 refresh();
@@ -322,15 +321,15 @@ function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
         svg.select(".x.axis").call(xAxis);
         svg.select(".y.axis").call(yAxis);
         svg.selectAll(".dot")
-            .filter(function(d) { return !(d[horizontalVar] >= x.domain()[0] && d[horizontalVar] <= x.domain()[1] 
-                && d[verticalVar] >= y.domain()[0] && d[verticalVar] <= y.domain()[1]); })
+            .filter(function(d) { return !(d[horizontalVar] >= x[plotId].domain()[0] && d[horizontalVar] <= x[plotId].domain()[1] 
+                && d[verticalVar] >= y[plotId].domain()[0] && d[verticalVar] <= y[plotId].domain()[1]); })
             .remove();
         svg.selectAll(".dot")
             .attr("transform", transform);
     }
 
     function transform(d) {
-        return "translate(" + x(d[horizontalVar]) + "," + y(d[verticalVar]) + ")";
+        return "translate(" + x[plotId](d[horizontalVar]) + "," + y[plotId](d[verticalVar]) + ")";
     }
 
     /*
@@ -351,8 +350,8 @@ function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
     /*
         Computes the domains of the variables, so that it can construct x and y axis.
     */
-    x.domain(d3.extent(data, function(d) { return d[horizontalVar]; })).nice();
-    y.domain(d3.extent(data, function(d) { return d[verticalVar]; })).nice();
+    x[plotId].domain(d3.extent(data, function(d) { return d[horizontalVar]; })).nice();
+    y[plotId].domain(d3.extent(data, function(d) { return d[verticalVar]; })).nice();
 
     svg.append("g")
         .attr("class", "x axis")
@@ -409,7 +408,7 @@ function drawPlot (plotDiv, horizontalAxis, verticalAxis) {
     /*
         This makes the tool redraw the Chernoff face when variables are changed.
     */
-    if (chernoffIsSet){
+    if (useChernoff && chernoffIsSet){
         setChernoff(currentFace, chernoffSVG);
     }
 
