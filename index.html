@@ -12,30 +12,42 @@
 
 <div class="dropdown">
     X:
-    <select id="xVar" onChange="drawPlot()">
-    </select>
+    <select id="xVar" onChange="drawPlots()"></select>
     
     Y:
-    <select id="yVar" onChange="drawPlot()">
-    </select>
+    <select id="yVar" onChange="drawPlots()"></select>
+
+    <span id="hiddenVar" style="display: none">
+    Z:
+    <select id="zVar" onChange="drawPlots()"></select>
+    </span>
     
     C:
-    <select id="cVar" onChange="drawPlot()">
-    </select>
+    <select id="cVar" onChange="drawPlots()"></select>
     
     R:
-    <select id="rVar" onChange="drawPlot()">
-    </select>
+    <select id="rVar" onChange="drawPlots()"></select>
 
-    <button id="reset" onClick="resetZoom()">Reset zoom</button>
+    <button onClick="resetZoom()">Reset zoom</button>
     
 </div>
 
 <table>
     <tr>
-        <td><div class="plot"></div></td>
         <td>
             <table>
+                <tr>
+                    <td><div class="plot1"></div></td>
+                    <td><div class="plot2"></div></td>
+                </tr>
+                <tr>
+                    <td><div class="plot3"></div></td>
+                    <td><div class="plot4"></div></td>
+                </tr>
+            </table>
+        </td>
+        <td>
+            <table class="chernoffTable">
                 <tr>
                     <td><div class="face"><svg height="200" width="200"></svg></div></td>
                     <td>
@@ -55,7 +67,11 @@
 
 <div class="tooltip" style="opacity: 0"></div>
 
-<input type="checkbox" id="mockData" onclick="checkbox()"> Add mock data
+<input type="checkbox" id="mockDataBox"> Add mock data
+
+<input type="checkbox" id="chernoffBox" checked> Chernoff
+
+<input type="checkbox" id="multiplotBox"> Multi-plot (warning: may cause lag!)
 
 <div class="downloads"></div>
 

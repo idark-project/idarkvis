@@ -3,6 +3,8 @@ iDark Project visualization tools
 
 ## Scatterplots
 
-* scatter.html visualises the dataset with a scatterplot that also uses colour and radius to represent variables.
-  * Also has a proof of concept version of Chernoff faces linked to each dot.
-* multiplot.html plots four of these plots, to visualise three dimensions in two.
+This tool visualises datasets with a scatterplot.
+
+* Can show multiple datasets (with the same variables) at once
+* Uses colour, size and Chernoff faces to add extra dimensions
+* Can also add an extra dimension with 'multiplot', 4 scatterplots add an extra Z variable
