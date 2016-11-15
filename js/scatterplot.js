@@ -28,7 +28,6 @@ function mockDataBox () {
 }
 
 function chernoffBox () {
-    data = [];
     if(d3.select("#chernoffBox").property("checked")){
         d3.select(".chernoffTable")
                 .transition()
