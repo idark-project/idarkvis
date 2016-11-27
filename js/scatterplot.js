@@ -426,6 +426,11 @@ function drawPlot (plotId, plotDiv, horizontalAxis, verticalAxis) {
                 .append("svg:g")
                 .attr("class", "chernoff")
                 .call(c);
+
+        for (var i = 0; i<7; i++){
+            var chernoffTooltip = d3.select(".faceVar" + i);
+            chernoffTooltip.html(d[faceVar[i]]);
+        }
     }
     
     /*
