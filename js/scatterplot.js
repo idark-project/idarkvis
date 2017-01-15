@@ -1,4 +1,4 @@
-var fileNames = ["data/data.csv"];
+var fileNames = ["data/data2.csv"];
 
 /*
     I use these values to keep track of how many face variables there are, if a face has already been drawn
@@ -176,7 +176,7 @@ function drawPlots () {
             width = 300 - margin.left - margin.right,
             height = 300 - margin.top - margin.bottom;
     } else {
-        margin = {top: 20, right: 20, bottom: 20, left: 20},
+        margin = {top: 20, right: 20, bottom: 30, left: 30},
             width = 700 - margin.left - margin.right,
             height = 500 - margin.top - margin.bottom;
     }
